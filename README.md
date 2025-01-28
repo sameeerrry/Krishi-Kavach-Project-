@@ -1,2 +1,2 @@
 Hackathon Project
-Krishi Kavach is a advamced ai tool helping farmers with ai based crop disease detection and rainfall prediction
+Krishi Kavach is a advanced ai tool helping farmers with ai based crop disease detection and rainfall prediction
