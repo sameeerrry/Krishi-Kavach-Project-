@@ -1,177 +1,143 @@
 import requests
 import streamlit as st
 import tensorflow as tf
+from deep_translator import GoogleTranslator
 import numpy as np
-from googletrans import Translator
 
-def translate_to_hindi(text):
-    translator = Translator()
-    translated = translator.translate(text, dest='hi')
-    return translated.text
-# Page Background Style
+# Page Background Style - Dark Mode
 page_bg_img = """
 <style>
-[data-testid="stAppViewContainer"]{
-background-image: url(https://wallpapercave.com/w/uwp4441882);
-background-size: cover;
+[data-testid="stAppViewContainer"] {
+    background-color: #000000;
+    color: white;
+}
+[data-testid="stHeader"] {
+    background: transparent;
+}
+[data-testid="stSidebar"] {
+    background-color: #111111;
+}
+h1, h2, h3, h4, h5, h6, p {
+    color: white !important;
 }
 </style>
 """
-st.markdown(
-    """
-    <style>
-    body {
-        background-color: #ADD8E6; /* Light blue background */
-        color: white; /* Black text color */
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 st.markdown(page_bg_img, unsafe_allow_html=True)
 
 # TensorFlow Model Prediction
 def model_prediction(test_image):
-    model = tf.keras.models.load_model("trained_plant_disease_model.keras")
+    model = tf.keras.models.load_model("C:/Users/shukl/Documents/Projects/Plant_classification/trained_plant_disease_model.keras")
     image = tf.keras.preprocessing.image.load_img(test_image, target_size=(128, 128))
     input_arr = tf.keras.preprocessing.image.img_to_array(image)
-    input_arr = np.array([input_arr]) 
+    input_arr = np.array([input_arr])
     predictions = model.predict(input_arr)
     return np.argmax(predictions)
 
 # Google Custom Search API Call
-def google_search(query, api_key, search_engine_id, num_results=3):
+def google_search(query, api_key, search_engine_id):
     search_url = f"https://www.googleapis.com/customsearch/v1"
     params = {
         "q": query,
-        "key": api_key,  # Your Google Custom Search API Key
-        "cx": search_engine_id,  # Your Search Engine ID
-        "num": num_results  # Get multiple results
+        "key": api_key,
+        "cx": search_engine_id,
+        "num": 1
     }
     response = requests.get(search_url, params=params)
     return response.json()
 
+# New Hindi Translator using deep_translator
+def translate_to_hindi(text):
+    try:
+        return GoogleTranslator(source='en', target='hi').translate(text)
+    except Exception as e:
+        return "Translation failed."
 
-# Sidebar for Navigation
+# Sidebar Navigation
 st.sidebar.title("Dashboard")
 app_mode = st.sidebar.selectbox("Select Page", ["Home", "Disease Recognition"])
 
-# Main Page Logic
+# Home Page
 if app_mode == "Home":
-    st.markdown(
-        """
-        <h1 style="
-            color: black; 
-            text-shadow: 0 0 10px rgba(173, 216, 230, 0.8), 
-                         0 0 20px rgba(173, 216, 230, 0.6), 
-                         0 0 30px rgba(173, 216, 230, 0.4);
-        ">
-            Krishi Kavach 
+    st.markdown("""
+        <h1 style="text-shadow: 0 0 10px rgba(255,255,255,0.8);">
+            Krishi Kavach 🌾
         </h1>
-        """,
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        """
-        <div style="color: white;">
+        """, unsafe_allow_html=True)
+
+    st.markdown("""
+        <div>
         Welcome to the Crop Disease Recognition System! 🌿🔍
 
-        Our mission is to help in identifying crop diseases efficiently. Upload an image of a plant, and our system will analyze it to detect any signs of diseases. Together, let's protect our crops and ensure a healthier harvest!
+        Our mission is to help identify crop diseases efficiently. Upload an image of a plant, and our system will analyze it for signs of disease. Let’s ensure a healthier harvest together.
 
-        <h3 style="color: white;">How it works?</h3>
-        <p>1. <b>Upload Image:</b> Go to the <b>Disease Recognition</b> page and upload an image of a plant with suspected diseases.<p>
-        <p>2. <b>Analysis:</b> Our system will process the image using advanced algorithms to identify potential diseases.<p>
-        <p>3. <b>Results:</b> View the results and recommendations for further action.<p>
+        <h3>How it works?</h3>
+        <p>1. <b>Upload Image:</b> Go to the <b>Disease Recognition</b> page and upload an image.</p>
+        <p>2. <b>Analysis:</b> Our model identifies possible plant diseases.</p>
+        <p>3. <b>Results:</b> View diagnosis and treatment suggestions.</p>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+        """, unsafe_allow_html=True)
 
-
+# Disease Recognition Page
 elif app_mode == "Disease Recognition":
-    st.markdown(
-        """
-        <style>
-        .header {
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-        }
-        </style>
-        <h1 class="header">Disease Recognition</h1>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("""<h1 style="color: white;">Disease Recognition</h1>""", unsafe_allow_html=True)
 
-    # Uploading the image
     test_image = st.file_uploader("Upload an image of a diseased plant")
-    
+
     if st.button("Show Image"):
         if test_image is not None:
             st.image(test_image, width=400, use_column_width=True)
         else:
-            st.write("Please upload an image to display")
+            st.warning("Please upload an image to display")
 
-    # Predict and Search Information about the Disease
     if st.button("Predict"):
         if test_image is not None:
-            st.spinner()
-            st.write("Analyzing the image...")
+            with st.spinner("Analyzing the image..."):
+                result_index = model_prediction(test_image)
 
-            # Predict disease using the model
-            result_index = model_prediction(test_image)
+                class_name = ['Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
+                              'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew',
+                              'Cherry_(including_sour)___healthy', 'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot',
+                              'Corn_(maize)___Common_rust_', 'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy',
+                              'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)',
+                              'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot',
+                              'Peach___healthy', 'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy',
+                              'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy',
+                              'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew',
+                              'Strawberry___Leaf_scorch', 'Strawberry___healthy', 'Tomato___Bacterial_spot',
+                              'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold',
+                              'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite',
+                              'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
+                              'Tomato___healthy']
 
-            # List of disease names
-            class_name = ['Apple_Apple_scab', 'Apple_Black_rot', 'Apple_Cedar_apple_rust', 'Apple_healthy',
-                          'Blueberry__healthy', 'Cherry(including_sour)_Powdery_mildew', 
-                          'Cherry_(including_sour)healthy', 'Corn(maize)_Cercospora_leaf_spot Gray_leaf_spot', 
-                          'Corn_(maize)Common_rust', 'Corn_(maize)Northern_Leaf_Blight', 'Corn(maize)_healthy', 
-                          'Grape_Black_rot', 'Grape_Esca(Black_Measles)', 'Grape_Leaf_blight(Isariopsis_Leaf_Spot)', 
-                          'Grape_healthy', 'Orange_Haunglongbing(Citrus_greening)', 'Peach__Bacterial_spot',
-                          'Peach_healthy', 'Pepper,_bell_Bacterial_spot', 'Pepper,_bell_healthy', 
-                          'Potato_Early_blight', 'Potato_Late_blight', 'Potato_healthy', 
-                          'Raspberry_healthy', 'Soybean_healthy', 'Squash_Powdery_mildew', 
-                          'Not in Dataset', 'Strawberry_healthy', 'Tomato_Bacterial_spot', 
-                          'Tomato_Early_blight', 'Tomato_Late_blight', 'Tomato_Leaf_Mold', 
-                          'Tomato_Septoria_leaf_spot', 'Tomato_Spider_mites Two-spotted_spider_mite', 
-                          'Tomato_Target_Spot', 'Tomato_Tomato_Yellow_Leaf_Curl_Virus', 'Tomato_Tomato_mosaic_virus',
-                          'Tomato___healthy']
+                if 0 <= result_index < len(class_name):
+                    predicted_disease = class_name[result_index]
+                else:
+                    st.error("Invalid model prediction index.")
+                    st.stop()
 
-            # Get the disease name
-            if result_index >= 0 and result_index < len(class_name):
-                predicted_disease = class_name[result_index]
-            else:
-                st.error("The model predicted an invalid index. Please try again or check the model.")
-                st.stop() 
-            if predicted_disease != "Not in Dataset" :
-                
-            
-
-                if "healthy" not in predicted_disease:  # Only proceed if not healthy
+                if "healthy" not in predicted_disease:
                     st.success(f"Model Prediction: {predicted_disease}")
 
-                    # Google Custom Search API integration to fetch information
-                    api_key = "AIzaSyArEi1aGVDCju2zfSwgoS-1xxq-ozz7-t8"  # Your API key
-                    search_engine_id = "a2779f8bc3d1d4416"  # Your Search Engine ID
-                    search_query = f"{result_index} disease remedy and information"
+                    api_key = "AIzaSyArEi1aGVDCju2zfSwgoS-1xxq-ozz7-t8"
+                    search_engine_id = "a2779f8bc3d1d4416"
+                    search_query = f"{predicted_disease} disease remedy and information"
                     search_results = google_search(search_query, api_key, search_engine_id)
 
-                    # Show the search result
                     if 'items' in search_results:
                         first_result = search_results['items'][0]
-                        title = first_result.get('title', 'No Title Available')
-                        snippet = first_result.get('snippet', 'No Description Available')
-                        disease_name = first_result.get('title', 'Unknown Disease')
-                        google_search_link = f"https://www.google.com/search?q={predicted_disease.replace(' ', '+')}+remedies"
+                        title = first_result.get('title', 'No Title')
+                        snippet = first_result.get('snippet', 'No Description')
+                        link = first_result.get('link', '#')
+                        expanded_snippet = "\n".join([snippet] * 4) if len(snippet.split()) < 30 else snippet
 
-                        # Remove the repetitive snippet concatenation
-                        st.write(f"Disease Information : {snippet}")
-                        st.write(f"Remedy Information : Visit this [link]({google_search_link}) for remedies")
-                    
+                        st.markdown(f"**Disease Info (English):** {expanded_snippet}")
+                        st.markdown(f"**Remedy (English):** [Read more]({link})")
 
+                        translated_text = translate_to_hindi(expanded_snippet)
+                        st.markdown(f"**Disease Info (Hindi):** {translated_text}")
                     else:
-                        st.write("No information available for this disease.")
+                        st.info("No additional information found.")
                 else:
-                    st.success("The plant is healthy! No disease detected.")
-            else:
-                st.write("Please upload a valid image to make a prediction.")
+                    st.success("The plant appears healthy! 🌱")
+        else:
+            st.warning("Please upload an image first.")
