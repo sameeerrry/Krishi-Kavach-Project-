@@ -1,0 +1,14 @@
+# Python / Backend ignores
+__pycache__/
+*.pyc
+*.keras
+
+# Node.js / Frontend ignores
+frontend/node_modules/
+
+# Env files
+*.env
+*.env.local
+
+# OS junk
+.DS_Store
