@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /sample-*
+Disallow: /blog/sample-*
+Disallow: /_hcms/preview/
+Disallow: /hs/manage-preferences/
+Disallow: /pt-br/team/ramiro-luege
+Allow: /
+Sitemap: https://www.indigoag.com.br/sitemap.xml
+Disallow: /hs/preferences-center/
+Disallow: /*?*hs_preview=*
+Disallow: /*?*hsCacheBuster=*
